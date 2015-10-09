@@ -10,7 +10,7 @@ This library can be used in your test namespace to avoid this behaviour.
 [lambdacd-pipeline-def-test.core :refer :all]
 
 (deftest pipeline-test
-  (testing "test all steps are definied in your pipeline"
+  (testing "test that all steps are definied in your pipeline"
     (is (test-p-def pipeline-def)))
 ```
 
