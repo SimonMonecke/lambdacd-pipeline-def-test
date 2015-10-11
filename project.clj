@@ -8,4 +8,5 @@
   :main lambdacd-pipeline-def-test.core
   :test-paths ["test"]
   :dependencies [[org.clojure/clojure "1.7.0"]
+                 [lambdacd "0.5.5"]
                  [org.clojure/tools.logging "0.3.0"]])
