@@ -1,24 +1,119 @@
 (ns lambdacd-pipeline-def-test.core
-  (require [clojure.tools.logging :as log]))
+  (require [lambdacd.steps.control-flow :as cflow]
+           [lambdacd.steps.git :as git]
+           [clojure.tools.logging :as log]
+           [clojure.test :as test]))
 
-(declare test-p-def)
+(def default-meta-steps `(cflow/either
+                           cflow/in-cwd
+                           cflow/in-parallel
+                           cflow/junction
+                           cflow/run
+                           git/with-git
+                           git/with-git-branch))
 
-(defn- test-list [l]
-  (every?
-    identity
-    (doall (map test-p-def l))))
+(declare test-step)
 
-(defn- test-symbol [s]
+(defn- file-and-line
+  [^Throwable exception depth]
+  (let [stacktrace (.getStackTrace exception)]
+    (if (< depth (count stacktrace))
+      (let [^StackTraceElement s (nth stacktrace depth)]
+        {:file (.getFileName s) :line (.getLineNumber s)})
+      {:file nil :line nil})))
+
+(defn report-test [msg-atom]
+  (when (not-empty @msg-atom)
+    (let [m (file-and-line (new java.lang.Throwable) 1)]
+      (test/with-test-out
+        (test/inc-report-counter :fail)
+        (println "\nFAIL in" (test/testing-vars-str m))
+        (when (seq test/*testing-contexts*) (println (test/testing-contexts-str)))
+        (doall (map #(println "  " %) @msg-atom))))))
+
+(defn report-fail [msg-atom mode msg]
+  (when (= mode :success)
+    (swap! msg-atom conj msg)))
+
+(defn positions
+  [pred coll]
+  (keep-indexed (fn [idx x]
+                  (when (pred x)
+                    idx))
+                coll))
+
+(defn calc-var-arg-sym-pos [l]
+  (first (positions #{'&} l)))
+
+(defn is-valid-arg-count? [res-fn arg-count arg-list]
+  (let [var-arg-sym-pos (calc-var-arg-sym-pos arg-list)]
+    (if (nil? var-arg-sym-pos)
+      (= arg-count (count arg-list))
+      (>= arg-count var-arg-sym-pos))))
+
+(defn is-in-meta-step-list? [meta-steps s]
+  (some #{s} meta-steps))
+
+(defn is-valid-fn-call? [msg-atom mode meta-steps l]
+  (let [given-args (rest l)
+        given-args-count (count given-args)
+        fn-sym (first l)
+        is-fn-resolvable (boolean (resolve fn-sym))]
+    (if (not is-fn-resolvable)
+      (do
+        (report-fail msg-atom mode (str fn-sym ": undefinied"))
+        true)
+      (let [res-fn (resolve fn-sym)
+            is-meta-step (or (:meta-step (meta res-fn)) (is-in-meta-step-list? meta-steps fn-sym))]
+        (if (not is-meta-step)
+          (do
+            (report-fail msg-atom mode (str fn-sym ": not a meta function"))
+            false)
+          (let [fn-arg-lists (:arglists (meta res-fn))
+                res (reduce (fn [old new] (or old (is-valid-arg-count? res-fn given-args-count new))) false fn-arg-lists)]
+            (or res
+                (do
+                  (report-fail msg-atom mode (str fn-sym ": wrong number of args"))
+                  false))))))))
+
+(defn- test-list [msg-atom mode meta-steps l]
+  (and (is-valid-fn-call? msg-atom mode meta-steps l)
+       (every?
+         identity
+         (doall (map (partial test-step msg-atom mode meta-steps) (rest l))))))
+
+(defn- test-symbol [msg-atom mode meta-steps s]
   (let [r (boolean (resolve s))]
-    (when (not r)
-      (log/error s "is undefinied"))
-    r))
+    (if (not r)
+      (report-fail msg-atom mode (str s ": undefinied"))
+      (let [res-fn (resolve s)
+            is-meta-step (or (:meta-step (meta res-fn)) (is-in-meta-step-list? meta-steps s))]
+        (if is-meta-step
+          (do
+            (report-fail msg-atom mode (str s ": wrong number of args"))
+            false)
+          true)))))
 
-(defn- test-element [x]
+(defn- test-element [msg-atom mode meta-steps x]
   (or (not (instance? clojure.lang.Symbol x))
-      (test-symbol x)))
+      (test-symbol msg-atom mode meta-steps x)))
 
-(defn test-p-def [x]
+(defn test-step [msg-atom mode meta-steps x]
   (if (seq? x)
-    (test-list x)
-    (test-element x)))
+    (test-list msg-atom mode meta-steps x)
+    (test-element msg-atom mode meta-steps x)))
+
+(defn test-p-def
+  ([mode x]
+   (test-p-def mode x nil))
+  ([mode x user-meta-steps]
+   (let [meta-steps (distinct (concat default-meta-steps user-meta-steps))
+         msg-atom (atom ())]
+     (if (seq? x)
+       (when (and (every?
+                    identity
+                    (doall (map (partial test-step msg-atom mode meta-steps) x)))
+                  (= :fail mode))
+         (report-fail msg-atom :success "Pipeline defintion is valid but you expected an error"))
+       (report-fail msg-atom :succes "Pipeline definitions has to be a sequence"))
+     (report-test msg-atom))))
