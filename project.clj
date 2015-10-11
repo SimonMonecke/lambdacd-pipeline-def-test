@@ -1,4 +1,4 @@
-(defproject lambdacd-pipeline-def-test "0.1.0"
+(defproject lambdacd-pipeline-def-test "0.2.0"
   :description "A Clojure library designed to test whether all the steps in your LambdaCD pipeline definitions are definied."
   :url "https://github.com/SimonMonecke/lambdacd-pipeline-def-test"
   :license {:name "The MIT License (MIT)"
