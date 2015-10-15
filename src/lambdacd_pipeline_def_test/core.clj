@@ -104,15 +104,15 @@
     (test-element msg-atom mode meta-steps x)))
 
 (defn test-p-def
-  ([mode x]
-   (test-p-def mode x nil))
-  ([mode x user-meta-steps]
+  ([mode p-def]
+   (test-p-def mode p-def nil))
+  ([mode p-def user-meta-steps]
    (let [meta-steps (distinct (concat default-meta-steps user-meta-steps))
          msg-atom (atom ())]
-     (if (seq? x)
+     (if (seq? p-def)
        (when (and (every?
                     identity
-                    (doall (map (partial test-step msg-atom mode meta-steps) x)))
+                    (doall (map (partial test-step msg-atom mode meta-steps) p-def)))
                   (= :fail mode))
          (report-fail msg-atom :success "Pipeline defintion is valid but you expected an error"))
        (report-fail msg-atom :succes "Pipeline definitions has to be a sequence"))
