@@ -26,7 +26,7 @@
   (when (not-empty @msg-atom)
     (let [m (file-and-line (new java.lang.Throwable) 1)]
       (test/with-test-out
-        (test/inc-report-counter :fail)
+        (test/inc-report-counter :failure)
         (println "\nFAIL in" (test/testing-vars-str m))
         (when (seq test/*testing-contexts*) (println (test/testing-contexts-str)))
         (doall (map #(println "  " %) @msg-atom))))))
@@ -113,7 +113,7 @@
        (when (and (every?
                     identity
                     (doall (map (partial test-step msg-atom mode meta-steps) p-def)))
-                  (= :fail mode))
+                  (= :failure mode))
          (report-fail msg-atom :success "Pipeline defintion is valid but you expected an error"))
        (report-fail msg-atom :succes "Pipeline definitions has to be a sequence"))
      (report-test msg-atom))))
