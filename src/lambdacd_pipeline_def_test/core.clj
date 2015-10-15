@@ -23,13 +23,14 @@
       {:file nil :line nil})))
 
 (defn report-test [msg-atom]
-  (when (not-empty @msg-atom)
+  (if (not-empty @msg-atom)
     (let [m (file-and-line (new java.lang.Throwable) 1)]
       (test/with-test-out
         (test/inc-report-counter :failure)
         (println "\nFAIL in" (test/testing-vars-str m))
         (when (seq test/*testing-contexts*) (println (test/testing-contexts-str)))
-        (doall (map #(println "  " %) @msg-atom))))))
+        (doall (map #(println "  " %) @msg-atom))))
+    (test/inc-report-counter :pass)))
 
 (defn report-fail [msg-atom mode msg]
   (when (= mode :success)
