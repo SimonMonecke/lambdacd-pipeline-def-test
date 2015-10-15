@@ -1,10 +1,10 @@
 # lambdacd-pipeline-def-test
 
-If you define you definie yout pipeline definition in LambdaCD it could happen that you have a typo in a step name or that you forget to import a namespace. In this case you are able to build and run your pipeline but it will stop if it tries to execute this undefinied step. And it will stop without any exeception.
+If you define your pipeline definition in LambdaCD it could happen that you have a typo in a step name or that you forget to import a namespace. In this case you are able to build and run your pipeline but it will stop if it tries to execute this undefinied step. And it will stop without any exception.
 
 This library can be used in your test namespace to avoid this behaviour.
 
-Another feature of this library is to test the argument lists of your meta-steps. The will fail if you try to use a regular LambdaCD step as meta-step or if you provide the wrong count of arguments.
+Another feature of this library is to test the argument lists of your meta-steps. The test will fail if you try to use a regular LambdaCD step as meta-step or if you provide the wrong count of arguments.
 
 ## Usage
 
@@ -43,9 +43,9 @@ Example:
 ```
 By using a meta-step you can parameterize your steps to use them in different stages of your pipeline.
 Regular LambdaCD steps also take two arguments: args and ctx. They will be injected when you run your pipeline.
-To validate your pipeline definition this library has to make a distinction between these two kinds of steps. There are two ways how you can tag your step as meta-step:
+To validate your pipeline definition this library has to make a distinction between these two kinds of steps. There are two ways how you can tag your step as a meta-step:
 
-### Add the :meta-step to the function declaration:
+### Add the :meta-step tag to the function declaration:
 ```clojure
 
 (defn deploy-my-app
