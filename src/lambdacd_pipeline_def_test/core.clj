@@ -26,7 +26,7 @@
   (if (not-empty @msg-atom)
     (let [m (file-and-line (new java.lang.Throwable) 1)]
       (test/with-test-out
-        (test/inc-report-counter :failure)
+        (test/inc-report-counter :fail)
         (println "\nFAIL in" (test/testing-vars-str m))
         (when (seq test/*testing-contexts*) (println (test/testing-contexts-str)))
         (doall (map #(println "  " %) @msg-atom))))
