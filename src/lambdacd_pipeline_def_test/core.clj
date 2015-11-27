@@ -9,6 +9,7 @@
                            cflow/in-parallel
                            cflow/junction
                            cflow/run
+                           cflow/alias
                            git/with-git
                            git/with-git-branch))
 

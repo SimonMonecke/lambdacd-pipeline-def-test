@@ -9,5 +9,5 @@
   :test-paths ["test"]
   :profiles {:uberjar {:aot :all}}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [lambdacd "0.5.5"]
+                 [lambdacd "0.5.7"]
                  [org.clojure/tools.logging "0.3.0"]])
